@@ -1,0 +1,138 @@
+#include <LiquidCrystal.h>
+
+// initialize the library by associating any needed LCD interface pin
+// with the arduino pin number it is connected to
+const int rs = 8, en = 9, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+byte ledPin = 3, motorPin = 11;
+
+void setup() {
+  // set up the LCD's number of columns and rows:
+  lcd.begin(16, 2);
+  pinMode(ledPin, OUTPUT);
+  pinMode(motorPin, OUTPUT);
+}
+
+String testString[6] = {"Controler time","to test button","Led light ","DC motor","my string 4:","my string 5:",};
+byte  numButtonPresed = 0, pressedButton = 0;
+int menuPointer = 4, ledValue = 20, ledValueAnalog = ledValue, motorValue = 45, motorValueAnalog = motorValue  ;
+
+void loop() {
+  
+  numButtonPresed = key(); 
+   
+
+  if(numButtonPresed == 1) {    
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("alert!!!");
+    lcd.setCursor(0, 1);
+    lcd.print("release button");
+  }
+  else{ 
+    if (numButtonPresed == 4)menuPointer++;
+    if (menuPointer > 5) menuPointer = 0;
+    if (numButtonPresed == 3)menuPointer--;
+    if (menuPointer < 0 ) menuPointer = 5;
+    
+    if (numButtonPresed == 5){ // right button is pressed
+      switch (menuPointer){
+        case 1:
+          buttonTest();
+          break;
+        case 2: // led ++
+          ledValue++; 
+          if (ledValue > 50) ledValue = 50; // control range of ledValue
+          ledValueAnalog = map(ledValue, 0, 50, 0, 255);     //map() change range
+          constrain(ledValueAnalog,0,255);
+          break;
+        case 3:
+          motorValue+=2;
+          if (motorValue > 50) motorValue = 50; // control range of motorValue
+          motorValueAnalog  = map(motorValue, 0, 50, 0, 255);
+          constrain(motorValueAnalog,0,255); //
+          break;
+     }    
+    }
+
+    if (numButtonPresed == 2){ // left button is pressed
+      switch (menuPointer){
+        case 2: // led --
+          ledValue--; 
+          if (ledValue < 0) ledValue = 0;   // control range of ledValue
+          ledValueAnalog = map(ledValue, 0, 50, 0, 255);     //map() change range
+          constrain(ledValueAnalog,0,255);
+          break;
+       case 3:
+          motorValue-=2;
+          if (motorValue < 0) motorValue = 0; // control range of motorValue
+          motorValueAnalog  = map(motorValue, 0, 50, 0, 255);
+          constrain(motorValueAnalog,0,255); //
+          break;
+      }    
+    }
+    
+
+  
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print(testString[menuPointer]);
+  
+    lcd.setCursor(0,1);
+    switch(menuPointer){
+      case 0: // time
+        lcd.print(millis()/1000);
+        break;
+      case 1: // button test
+        lcd.print("press right");
+        break;
+      case 2: // diode light control
+        lcd.print("value: ");
+        lcd.print(ledValue);
+        break;
+      case 3: // DC motor speed control
+        lcd.print("value: ");
+        lcd.print(motorValue);
+        break;    
+      default:
+        lcd.print("no data");
+    }
+
+    
+  }
+
+  analogWrite(ledPin, ledValueAnalog);
+  analogWrite(motorPin, motorValueAnalog);
+  
+  delay(250);
+  lcd.clear();
+}
+
+byte key(){
+  int val = analogRead(0);
+  if (val < 50) return 5;         // right button pressed
+  else if (val < 200) return 4;   // up button pressed
+  else if (val < 400) return 3;   // down button pressed
+  else if (val < 600) return 2;   // left button pressed
+  else if (val < 850) return 1;   // select button pressed
+  else if (val <= 1023) return 0; // all button released
+}
+
+void buttonTest(){
+  bool buttonTestFlag = true, rightFlag = false;
+  while (buttonTestFlag){
+    pressedButton = key();
+    lcd.setCursor(0,0);
+    lcd.print ("presed button "); lcd.print(pressedButton);
+    lcd.setCursor(0,1);
+    lcd.print("right then left");
+
+    if (pressedButton == 5){
+      rightFlag = true;
+    }
+    else {
+      if (pressedButton == 1 || pressedButton == 3 || pressedButton == 4 )rightFlag = false;
+    }
+    if (rightFlag == 1 && pressedButton == 2) buttonTestFlag = false;
+  }
+}
